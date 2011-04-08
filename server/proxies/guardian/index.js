@@ -7,6 +7,7 @@ var model = require('../../model');
 var GuardianProxy = function(configuration) {
   var domain = "content.guardianapis.com";
   var api_key = "ywyfby4r7zsfy2rc8eesk6q3";
+  this.configuration = configuration;
 
   var fetchResults = function(res, callback) {
     var data = "";
@@ -97,7 +98,7 @@ GuardianProxy.prototype.constructor = proxies.GuardianProxy;
 GuardianProxy.prototype.fetchCategories = function(callback) {
   if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
-  var data = this._fetchCategories(conf.categories, function(data) {
+  var data = this._fetchCategories(this.configuration.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
     var results = data.response.results;
     var categories = [];    
@@ -136,7 +137,7 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
 GuardianProxy.prototype.fetchCategory = function(id, callback) {
   if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
-  var data = this._fetchCategories(conf.categories, function(data) {
+  var data = this._fetchCategories(this.configuration.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
     var results = data.response.results;
     var categories = [];    
@@ -189,7 +190,7 @@ GuardianProxy.prototype.findLargestImage = function(mediaAssets) {
 GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
   if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
-  this._fetchCategories(conf.categories, function(data) {
+  this._fetchCategories(this.configuration.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
     var results = data.response.results;
     var categories = [];
