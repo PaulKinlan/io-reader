@@ -2,6 +2,7 @@ var proxies = require('../../proxies');
 var http = require('http');
 var async = require('async');
 var exceptions = require('../../exceptions');
+var model = require('../../model');
 
 var GuardianProxy = function(configuration) {
   var domain = "content.guardianapis.com";
@@ -102,7 +103,7 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
     var categories = [];    
     for(var r in results) {
       var result = results[r];
-      var new_category = new CategoryData(result.id, result.webTitle);
+      var new_category = new model.CategoryData(result.id, result.webTitle);
       var output_callback = (function(cat) {
         return function(inner_callback) {
           self._fetchCategory(cat.id, ["byline", "standfirst", "thumbnail"], function(category_data) {
@@ -112,7 +113,7 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
             for(var cat_r in cat_results) {
               var cat_res = cat_results[cat_r];
               if(!!cat_res.fields == false) continue;
-              var item = new CategoryItem(cat_res.id, cat_res.webTitle, cat_res.fields.standfirst, cat);
+              var item = new model.CategoryItem(cat_res.id, cat_res.webTitle, cat_res.fields.standfirst, cat);
               item.thumbnail = cat_res.fields.thumbnail;
               item.pubDate = cat_res.webPublicationDate;
               item.author = cat_res.fields.byline;
@@ -141,7 +142,7 @@ GuardianProxy.prototype.fetchCategory = function(id, callback) {
     var categories = [];    
     for(var r in results) {
       var result = results[r];
-      var category = new CategoryData(result.id, result.webTitle);
+      var category = new model.CategoryData(result.id, result.webTitle);
       var output_callback = (function(cat) {
         return function(inner_callback) {
           self._fetchCategory(cat.id, ["all"], function(category_data) {
@@ -150,7 +151,7 @@ GuardianProxy.prototype.fetchCategory = function(id, callback) {
             var cat_results = category_data.response.results;
             for(var cat_r in cat_results) {
               var cat_result = cat_results[cat_r];
-              var item = new CategoryItem(cat_result.id, cat_result.webTitle, cat_result.fields.standfirst, cat);
+              var item = new model.CategoryItem(cat_result.id, cat_result.webTitle, cat_result.fields.standfirst, cat);
               item.thumbnail = cat_result.fields.thumbnail;
               item.pubDate = cat_result.webPublicationDate;
               item.author = cat_result.fields.byline;
@@ -196,7 +197,7 @@ GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
      
     for(var r in results) {
       var result = results[r];
-      var newCat = new CategoryData(result.id, result.webTitle);
+      var newCat = new model.CategoryData(result.id, result.webTitle);
 
       // Get the basic article information to blend it into the results
 
@@ -205,7 +206,7 @@ GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
           self._fetchArticle(id, cat.id, function(article_data) {
             if(!!article_data.response == false || article_data.response.status != "ok") return;
             var article_result = article_data.response.content;
-            var item = new CategoryItem(article_result.id, article_result.webTitle, article_result.fields.trailText, cat);
+            var item = new model.CategoryItem(article_result.id, article_result.webTitle, article_result.fields.trailText, cat);
             if(!!article_result.fields.body)
               item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
             item.thumbnail = article_result.fields.thumbnail;
