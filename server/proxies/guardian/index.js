@@ -114,6 +114,7 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
             for(var cat_r in cat_results) {
               var cat_res = cat_results[cat_r];
               if(!!cat_res.fields == false) continue;
+              if(!!cat_res.fields.thumbnail == false) continue;
               var item = new model.CategoryItem(cat_res.id, cat_res.webTitle, cat_res.fields.standfirst, cat);
               item.thumbnail = cat_res.fields.thumbnail;
               item.pubDate = cat_res.webPublicationDate;
