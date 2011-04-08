@@ -1,6 +1,7 @@
 var proxies = require('../../proxies');
 var http = require('http');
 var async = require('async');
+var exceptions = require('../../exceptions');
 
 var GuardianProxy = function(configuration) {
   var domain = "content.guardianapis.com";
@@ -28,7 +29,7 @@ var GuardianProxy = function(configuration) {
   };
  
   this._fetchCategories = function(categories, callback) {
-    if(!!callback == false) throw new NoCallbackException();
+    if(!!callback == false) throw new exceptions.NoCallbackException();
     
     var query = {
       "q": categories.join("+"),
@@ -47,7 +48,7 @@ var GuardianProxy = function(configuration) {
   };
 
   this._fetchCategory = function(id, fields, callback) {
-    if(!!callback == false) throw new NoCallbackException();
+    if(!!callback == false) throw new exceptions.NoCallbackException();
     
     var query = {
       "section": id,
@@ -69,7 +70,7 @@ var GuardianProxy = function(configuration) {
   };
 
   this._fetchArticle = function(id, category, callback) {
-    if(!!callback == false) throw new NoCallbackException();
+    if(!!callback == false) throw new exceptions.NoCallbackException();
     
     var query = {
       "format": "json",
@@ -93,7 +94,7 @@ GuardianProxy.prototype = new proxies.Proxy();
 GuardianProxy.prototype.constructor = proxies.GuardianProxy;
 
 GuardianProxy.prototype.fetchCategories = function(callback) {
-  if(!!callback == false) throw new NoCallbackException();
+  if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
   var data = this._fetchCategories(conf.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
@@ -132,7 +133,7 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
 };
 
 GuardianProxy.prototype.fetchCategory = function(id, callback) {
-  if(!!callback == false) throw new NoCallbackException();
+  if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
   var data = this._fetchCategories(conf.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
@@ -185,7 +186,7 @@ GuardianProxy.prototype.findLargestImage = function(mediaAssets) {
 };
 
 GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
-  if(!!callback == false) throw new NoCallbackException();
+  if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
   this._fetchCategories(conf.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
