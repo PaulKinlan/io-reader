@@ -114,12 +114,7 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
               var cat_res = cat_results[cat_r];
               if(!!cat_res.fields == false) continue;
               if(!!cat_res.fields.thumbnail == false) continue;
-              var item = new model.CategoryItem(cat_res.id, cat_res.webTitle, cat_res.fields.standfirst, cat);
-              item.thumbnail = cat_res.fields.thumbnail;
-              item.pubDate = cat_res.webPublicationDate;
-              item.author = cat_res.fields.byline;
-              item.url = cat_res.webUrl;
-              item.largeImage = self.findLargestImage(cat_res.mediaAssets).url;
+              var item = self.createItem(cat_res, cat);
               cat.addItem(item);
             }
             inner_callback(null, cat);
@@ -150,16 +145,12 @@ GuardianProxy.prototype.fetchCategory = function(id, callback) {
             if(!!category_data.response == false || category_data.response.status != "ok") return;
             if(cat.id == id) cat.state = "active";
             var cat_results = category_data.response.results;
-            for(var cat_r in cat_results) {
-              var cat_result = cat_results[cat_r];
-              var item = new model.CategoryItem(cat_result.id, cat_result.webTitle, cat_result.fields.standfirst, cat);
-              item.thumbnail = cat_result.fields.thumbnail;
-              item.pubDate = cat_result.webPublicationDate;
-              item.author = cat_result.fields.byline;
-              item.url = cat_result.webUrl;
-              item.largeImage = self.findLargestImage(cat_result.mediaAssets).url;
+            var cat_result;
+
+            for(var r = 0; cat_result = cat_results[r]; r++) {
               cat.addItem(item); 
             }
+            
             inner_callback(null, cat);
            });
         };
@@ -187,49 +178,66 @@ GuardianProxy.prototype.findLargestImage = function(mediaAssets) {
   return largest;
 };
 
+GuardianProxy.prototype.createItem = function(article_result, cat) {
+  var item = new model.CategoryItem(article_result.id, article_result.webTitle, article_result.fields.trailText, cat);
+  if(!!article_result.fields.body)
+    item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
+  item.thumbnail = article_result.fields.thumbnail;
+  item.largeImage = this.findLargestImage(article_result.mediaAssets).url;
+  item.pubDate = article_result.webPublicationDate;
+  item.author = article_result.fields.byline;
+  item.url = article_result.webUrl;
+  return item;
+};
+
 GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
   if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
-  this._fetchCategories(this.configuration.categories, function(data) {
+  var data = this._fetchCategories(this.configuration.categories, function(data) {
     if(!!data.response == false || data.response.status != "ok") return; 
     var results = data.response.results;
-    var categories = [];
-    var fetching = false;
-     
+    var categories = [];    
     for(var r in results) {
       var result = results[r];
-      var newCat = new model.CategoryData(result.id, result.webTitle);
+      var category = new model.CategoryData(result.id, result.webTitle);
+      var output_callback = (function(cat) {
+        return function(inner_callback) {
+          self._fetchCategory(cat.id, ["all"], function(category_data) {
+            if(!!category_data.response == false || category_data.response.status != "ok") return;
+            if(cat.id == id) cat.state = "active";
+            var articleFound = false;
+            var cat_results = category_data.response.results;
+            var cat_result;
 
-      // Get the basic article information to blend it into the results
-
-      var outer_function = (function(cat) { return function(inner_callback) {
-        if(cat.id == category) {
-          self._fetchArticle(id, cat.id, function(article_data) {
-            if(!!article_data.response == false || article_data.response.status != "ok") return;
-            var article_result = article_data.response.content;
-            var item = new model.CategoryItem(article_result.id, article_result.webTitle, article_result.fields.trailText, cat);
-            if(!!article_result.fields.body)
-              item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
-            item.thumbnail = article_result.fields.thumbnail;
-            item.largeImage = self.findLargestImage(article_result.mediaAssets).url;
-            item.pubDate = article_result.webPublicationDate;
-            item.author = article_result.fields.byline;
-            item.url = article_result.webUrl;
-            cat.addItem(item);
+            for(var r = 0; cat_result = cat_results[r]; r++) {
+              if(cat_result.id == id) articleFound = true;
+              var item = self.createItem(cat_result, cat);
+              item.state = "active";
+              cat.addItem(item); 
+            }
+            
+            if(articleFound == false) {
+              self._fetchArticle(id, cat.id, function(article_data) {
+                if(!!article_data.response == false || article_data.response.status != "ok") return;
+                var article_result = article_data.response.content;
+                var item = self.createItem(article_result, cat);
+                item.state = "active";
+                cat.addItem(item);     
       
-            inner_callback(null, cat);
-          }); 
-        }
-        else {
-          inner_callback(null, cat);
-        }
-      }
-      })(newCat);
-      categories.push(outer_function);
+                inner_callback(null, cat);
+              }); 
+            }
+            else {
+             inner_callback(null, cat);
+            }
+          });    
+        };
+      })(category);
+      categories.push(output_callback);
     }
-    // If there is no matching category, it will lock.
+
     async.parallel(categories, function(err, presults){ callback(presults); });
-  }); 
+  });
 };
 
 exports.proxy = GuardianProxy;
