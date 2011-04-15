@@ -78,7 +78,6 @@ var GuardianProxy = function(configuration) {
       "format": "json",
       "show-fields": "all",
       "show-media": "all",
-      "page-size": "8",
       "api-key": api_key
     };
    
