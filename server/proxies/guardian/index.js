@@ -179,13 +179,19 @@ GuardianProxy.prototype.findLargestImage = function(mediaAssets) {
 };
 
 GuardianProxy.prototype.createItem = function(article_result, cat) {
-  var item = new model.CategoryItem(article_result.id, article_result.webTitle, article_result.fields.trailText, cat);
-  if(!!article_result.fields.body)
-    item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
-  item.thumbnail = article_result.fields.thumbnail;
+  var item = new model.CategoryItem(article_result.id, article_result.webTitle, "", cat);
+  if(article_result.fields) {
+    item.shortDescription = article_result.fields.trailText;
+    item.thumbnail = article_result.fields.thumbnail;
+    item.author = article_result.fields.byline;
+    
+    if(!!article_result.fields.body)
+      item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
+  }
+  
   item.largeImage = this.findLargestImage(article_result.mediaAssets).url;
   item.pubDate = article_result.webPublicationDate;
-  item.author = article_result.fields.byline;
+
   item.url = article_result.webUrl;
   return item;
 };
@@ -202,28 +208,31 @@ GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
       var category = new model.CategoryData(result.id, result.webTitle);
       var output_callback = (function(cat) {
         return function(inner_callback) {
-          self._fetchCategory(cat.id, ["all"], function(category_data) {
+          self._fetchCategory(cat.id, ["byline", "standfirst", "thumbnail"], function(category_data) {
             if(!!category_data.response == false || category_data.response.status != "ok") return;
             if(cat.id == id) cat.state = "active";
             var articleFound = false;
             var cat_results = category_data.response.results;
             var cat_result;
+            var activeArticleOffset = -1;
 
             for(var r = 0; cat_result = cat_results[r]; r++) {
-              if(cat_result.id == id) articleFound = true;
+              if(cat_result.id == id) { 
+                activeArticleOffset = r;
+              }
               var item = self.createItem(cat_result, cat);
-              item.state = "active";
               cat.addItem(item); 
             }
             
-            if(articleFound == false) {
+            if(activeArticleOffset >= 0) {
               self._fetchArticle(id, cat.id, function(article_data) {
                 if(!!article_data.response == false || article_data.response.status != "ok") return;
                 var article_result = article_data.response.content;
-                var item = self.createItem(article_result, cat);
+                var item  = self.createItem(article_result, cat)
                 item.state = "active";
-                cat.addItem(item);     
-      
+                if(activeArticleOffset == -1) cat.addItem(item); 
+                else cat.articles[activeArticleOffset] = item;
+
                 inner_callback(null, cat);
               }); 
             }
