@@ -4,11 +4,39 @@ var async = require('async');
 var exceptions = require('../../exceptions');
 var model = require('../../model');
 
+var Cache = function(timeout) {
+  var cache = {};
+  var cacheCallback = {};
+  var timeout = timeout;
+
+  var clearCacheItem = function(key) {
+    console.log("Removing: " + key);
+    delete cache[key];
+    delete cacheCallback[key]
+  };
+
+  this.add = function(key, value, itemTimeout) {
+    timeout = itemTimeout || timeout;
+    if(cacheCallback[key]) clearTimeout(cacheCallback[key]);
+    cache[key] = value;
+    cacheCallback[key] = setTimeout(function() { clearCacheItem(key); }, timeout * 1000);
+  };
+
+  this.get = function(key) {
+    var result = cache[key];
+    return result; 
+  };
+};
+
+var httpCache = new Cache(60);
+
 var GuardianProxy = function(configuration) {
   var domain = "content.guardianapis.com";
   var api_key = "ywyfby4r7zsfy2rc8eesk6q3";
-  this.configuration = configuration;
 
+
+  this.configuration = configuration;
+  
   var fetchResults = function(res, callback) {
     var data = "";
     res.setEncoding('utf-8');
@@ -29,6 +57,23 @@ var GuardianProxy = function(configuration) {
     }
     return qs.join("&");
   };
+
+  var makeRequest = function(options, callback) {
+    var path = options.path;
+    var item = httpCache.get(path);
+    if(item) {
+      callback(item);
+      return;
+    }
+    else {
+     http.get(options, function(res) {
+       fetchResults(res, function(data) {
+         httpCache.add(path, data);
+         callback(data);
+       });
+     }); 
+    }
+  };
  
   this._fetchCategories = function(categories, callback) {
     if(!!callback == false) throw new exceptions.NoCallbackException();
@@ -46,7 +91,8 @@ var GuardianProxy = function(configuration) {
       port: 80,
       path: '/sections?' + toQueryString(query) 
     };
-    http.get(options, function(res) {fetchResults(res, callback);} ); 
+
+    makeRequest(options, callback);
   };
 
   this._fetchCategory = function(id, fields, callback) {
@@ -68,7 +114,7 @@ var GuardianProxy = function(configuration) {
       path: '/search?' + toQueryString(query)
     };
 
-    http.get(options, function(res) { fetchResults(res, callback);});
+    makeRequest(options, callback);
   };
 
   this._fetchArticle = function(id, category, callback) {
@@ -87,7 +133,7 @@ var GuardianProxy = function(configuration) {
       path: "/" + decodeURIComponent(id) + "?" + toQueryString(query)
     }
      
-    http.get(options, function(res) {fetchResults(res, callback);});  
+    makeRequest(options, callback);
   };
 };
 
