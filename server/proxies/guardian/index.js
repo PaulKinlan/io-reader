@@ -194,6 +194,7 @@ GuardianProxy.prototype.fetchCategory = function(id, callback) {
             var cat_result;
 
             for(var r = 0; cat_result = cat_results[r]; r++) {
+              var item = self.createItem(cat_result, cat);
               cat.addItem(item); 
             }
             
