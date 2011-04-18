@@ -159,7 +159,6 @@ GuardianProxy.prototype.fetchCategories = function(callback) {
             for(var cat_r in cat_results) {
               var cat_res = cat_results[cat_r];
               if(!!cat_res.fields == false) continue;
-              if(!!cat_res.fields.thumbnail == false) continue;
               var item = self.createItem(cat_res, cat);
               cat.addItem(item);
             }
@@ -228,7 +227,7 @@ GuardianProxy.prototype.findLargestImage = function(mediaAssets) {
 GuardianProxy.prototype.createItem = function(article_result, cat) {
   var item = new model.CategoryItem(article_result.id, article_result.webTitle, "", cat);
   if(article_result.fields) {
-    item.shortDescription = article_result.fields.trailText;
+    item.shortDescription = article_result.fields.trailText || article_result.fields.standfirst;
     item.thumbnail = article_result.fields.thumbnail;
     item.author = article_result.fields.byline;
     
