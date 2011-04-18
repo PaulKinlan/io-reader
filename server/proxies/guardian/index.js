@@ -232,7 +232,7 @@ GuardianProxy.prototype.createItem = function(article_result, cat) {
     item.author = article_result.fields.byline;
     
     if(!!article_result.fields.body)
-      item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
+      item.body = article_result.fields.body.replace(/\n/gim,"").replace(/\r/gim,"");
   }
 
   if(!!item.thumbnail == false) {
