@@ -235,6 +235,10 @@ GuardianProxy.prototype.createItem = function(article_result, cat) {
     if(!!article_result.fields.body)
       item.body = article_result.fields.body.replace(/\"/gim,'\\"').replace(/\n/gim,"").replace(/\r/gim,"");
   }
+
+  if(!!item.thumbnail == false) {
+    item.imageState = "nothumbnail";
+  }
   
   item.largeImage = this.findLargestImage(article_result.mediaAssets).url;
   item.pubDate = article_result.webPublicationDate;
