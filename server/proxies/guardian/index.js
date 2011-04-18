@@ -246,7 +246,7 @@ GuardianProxy.prototype.createItem = function(article_result, cat) {
   return item;
 };
 
-GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
+GuardianProxy.prototype.fetchArticle = function(id, currentCategory, callback) {
   if(!!callback == false) throw new exceptions.NoCallbackException();
   var self = this;
   var data = this._fetchCategories(this.configuration.categories, function(data) {
@@ -260,7 +260,8 @@ GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
         return function(inner_callback) {
           self._fetchCategory(cat.id, ["byline", "standfirst", "thumbnail"], function(category_data) {
             if(!!category_data.response == false || category_data.response.status != "ok") return;
-            if(cat.id == id) cat.categoryState = "active";
+            if(cat.id == currentCategory) cat.categoryState = "active";
+            console.log(cat.id + " " + currentCategory);
             var articleFound = false;
             var cat_results = category_data.response.results;
             var cat_result;
