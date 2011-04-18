@@ -236,7 +236,7 @@ GuardianProxy.prototype.createItem = function(article_result, cat) {
   }
 
   if(!!item.thumbnail == false) {
-    item.imageState = "nothumbnail";
+    item.imageState = "textonly";
   }
   
   item.largeImage = this.findLargestImage(article_result.mediaAssets).url;
