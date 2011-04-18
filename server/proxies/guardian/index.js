@@ -279,7 +279,7 @@ GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
                 if(!!article_data.response == false || article_data.response.status != "ok") return;
                 var article_result = article_data.response.content;
                 var item  = self.createItem(article_result, cat)
-                item.state = "active";
+                item.articleState = "active";
                 if(activeArticleOffset == -1) cat.addItem(item); 
                 else cat.articles[activeArticleOffset] = item;
 
