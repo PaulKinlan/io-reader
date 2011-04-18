@@ -188,7 +188,7 @@ GuardianProxy.prototype.fetchCategory = function(id, callback) {
         return function(inner_callback) {
           self._fetchCategory(cat.id, ["all"], function(category_data) {
             if(!!category_data.response == false || category_data.response.status != "ok") return;
-            if(cat.id == id) cat.state = "active";
+            if(cat.id == id) cat.categoryState = "active";
             var cat_results = category_data.response.results;
             var cat_result;
 
@@ -260,7 +260,7 @@ GuardianProxy.prototype.fetchArticle = function(id, category, callback) {
         return function(inner_callback) {
           self._fetchCategory(cat.id, ["byline", "standfirst", "thumbnail"], function(category_data) {
             if(!!category_data.response == false || category_data.response.status != "ok") return;
-            if(cat.id == id) cat.state = "active";
+            if(cat.id == id) cat.categoryState = "active";
             var articleFound = false;
             var cat_results = category_data.response.results;
             var cat_result;
