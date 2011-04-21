@@ -186,7 +186,7 @@ GuardianProxy.prototype.fetchCategory = function(id, callback) {
       var category = new model.CategoryData(result.id, result.webTitle);
       var output_callback = (function(cat) {
         return function(inner_callback) {
-          self._fetchCategory(cat.id, ["all"], function(category_data) {
+          self._fetchCategory(cat.id, ["thumbnail","byline","standfirst"], function(category_data) {
             if(!!category_data.response == false || category_data.response.status != "ok") return;
             if(cat.id == id) cat.categoryState = "active";
             var cat_results = category_data.response.results;
