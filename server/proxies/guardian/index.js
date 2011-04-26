@@ -1,6 +1,6 @@
-var proxies = require('../../proxies');
 var http = require('http');
 var async = require('async');
+var proxies = require('../../proxies');
 var exceptions = require('../../exceptions');
 var model = require('../../model');
 
@@ -103,6 +103,7 @@ var GuardianProxy = function(configuration) {
       "show-fields": fields.join(","),
       "format": "json",
       "page-size": "8",
+      "tag": "type%2farticle",
       "show-media": "all",
       "use-date": "last-modified",
       "api-key": api_key
@@ -240,8 +241,7 @@ GuardianProxy.prototype.createItem = function(article_result, cat) {
   }
   
   item.largeImage = this.findLargestImage(article_result.mediaAssets).url;
-  item.pubDate = article_result.webPublicationDate;
-
+  item.pubDate = new Date(article_result.webPublicationDate);
   item.url = article_result.webUrl;
   return item;
 };
