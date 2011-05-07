@@ -44,7 +44,7 @@ var Cache = function(timeout) {
   };
 };
 
-var httpCache = new Cache(60);
+var httpCache = new Cache(60 * 5);
 
 var GuardianProxy = function(configuration) {
   var domain = "content.guardianapis.com";
@@ -264,8 +264,10 @@ GuardianProxy.prototype.createItem = function(article_result, cat) {
 
 GuardianProxy.prototype.fetchArticle = function(id, currentCategory, callback) {
   if(!!callback == false) throw new exceptions.NoCallbackException();
+  console.log("Enter Fetch Article");
   var self = this;
   var data = this._fetchCategories(this.configuration.categories, function(data) {
+    console.log("Fetch Categories");
     if(!!data.response == false || data.response.status != "ok") return; 
     var results = data.response.results;
     var categories = [];    
@@ -274,7 +276,8 @@ GuardianProxy.prototype.fetchArticle = function(id, currentCategory, callback) {
       var category = new model.CategoryData(result.id, result.webTitle);
       var output_callback = (function(cat) {
         return function(inner_callback) {
-          self._fetchCategory(cat.id, ["byline", "standfirst", "thumbnail"], function(category_data) { 
+          self._fetchCategory(cat.id, ["byline", "standfirst", "thumbnail"], function(category_data) {
+            console.log("Fetched Category");
             if(!!category_data.response == false || category_data.response.status != "ok") return;
             if(cat.id == currentCategory) cat.categoryState = "active";
             var articleFound = false;
@@ -290,22 +293,16 @@ GuardianProxy.prototype.fetchArticle = function(id, currentCategory, callback) {
               cat.addItem(item); 
             }
             
-            if(activeArticleOffset >= 0) {
-              self._fetchArticle(id, cat.id, function(article_data) {
-                if(!!article_data.response == false || article_data.response.status != "ok") return;
-                var article_result = article_data.response.content;
-                var item  = self.createItem(article_result, cat)
-                item.articleState = "active";
-                if(activeArticleOffset == -1) cat.addItem(item); 
-                else cat.articles[activeArticleOffset] = item;
-
-                inner_callback(null, cat);
-              }); 
-            }
-            else {
-             inner_callback(null, cat);
-            }
-          });    
+            self._fetchArticle(id, cat.id, function(article_data) {
+              if(!!article_data.response == false || article_data.response.status != "ok") return;
+              var article_result = article_data.response.content;
+              var item  = self.createItem(article_result, cat)
+              item.articleState = "active";
+              if(activeArticleOffset == -1) cat.addItem(item); 
+              else cat.articles[activeArticleOffset] = item;
+              inner_callback(null, cat);
+            }); 
+          });
         };
       })(category);
       categories.push(output_callback);
