@@ -61,7 +61,12 @@ var GuardianProxy = function(configuration) {
     });
 
     res.on('end', function() {
-      callback(JSON.parse(data));
+      try {
+        callback(JSON.parse(data));
+      } catch(ex) {
+        console.log("error parsing data - maybe remote API is throttling or down?", res);
+        callback({});
+      }
     });
   };
 
